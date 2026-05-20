@@ -1,2 +1,2 @@
 # homelab
-Networking, cybersecurity, and general IT isolated home network for experimenting and learning
+Networking, cybersecurity, and general IT-focused isolated home network for experimenting and learning.
