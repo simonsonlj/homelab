@@ -1,7 +1,7 @@
 **HP Envy: Troubleshooting**
 
 May 22, 2026
-**Status**: Slow startup. Noticed battery issues; doesn't charge while on; drains quickly while unplugged. Will likely replace adapter, battery, and storage.
+>**Status**: Slow startup. Noticed battery issues; doesn't charge while on; drains quickly while unplugged. Will likely replace adapter, battery, and storage.
 **Battery/Charger**: Running boot up diagnostic using HP PC Hardware Diagnostics tool. Battery and charger both received warnings. Incompatible charger and battery status: weak (30), logic state: weak (30), full charge cap: 48%. 
 
 May 13, 2026  
