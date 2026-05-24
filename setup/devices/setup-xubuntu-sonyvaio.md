@@ -1,3 +1,5 @@
+**Sony Vaio: Xubuntu 26.04**
+
 May 12, 2026  
 >**Status**: Xubuntu is fully installed. SSH operating. Plans for metasploitable on VM.  
 
