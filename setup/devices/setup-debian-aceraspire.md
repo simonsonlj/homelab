@@ -1,3 +1,68 @@
+## June 14, 2026 ##
+
+**Status**:  
+Running: UFW, Fail2Ban, Docker, Portainer, Matrix Synapse + PostgreSQL.  
+Consider: Reverse proxy, Pi-hole, Cockpit, Home Assistant, Netdata, Immich, Paperless-ngx, Vaultwarden, Tailscale, Authelia, Homepage, Wazuh, CrowdSec, Lynis, and more
+
+**Verify UFW and Fail2Ban** (installed previously, confirming actual active state)  
+>**UFW**: `sudo ufw status verbose`  
+**Result**: Active. Default deny incoming, allow outgoing, deny routed. Only 22/tcp (SSH) allowed in, IPv4 and IPv6. Logging on (low).
+
+>**Fail2Ban**: `sudo systemctl status fail2ban` confirmed active/running. `sudo fail2ban-client status` confirmed `sshd` jail active.  
+**Jail detail**: `sudo fail2ban-client status sshd` — 0 currently/total failed, 0 banned (expected, low exposure so far).  
+**Configured thresholds** (tighter than default):  
+`maxretry`: 3 (default 5)  
+`findtime`: 600s / 10 min  
+`bantime`: 3600s / 1 hour (default 600s / 10 min)
+
+**Deploy Portainer**  
+>**Reasoning**: Quality-of-life container management UI before adding more Docker services.  
+**Commands**:  
+`docker volume create portainer_data`  
+`docker run -d -p 8000:8000 -p 9443:9443 --name portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer-ce:latest`  
+**Access**: `https://10.10.10.3:9443` (self-signed cert, browser warning expected).  
+**Setup**: Initial setup screen timed out once — fixed via `docker restart portainer`, completed setup on retry. Admin account created.  
+**Note**: Uses named volume (`portainer_data`), not bind mount — Docker manages location under `/var/lib/docker/volumes/`. Inconsistent with bind-mount convention adopted for subsequent services, but left as-is since already deployed and working.
+
+**Docker user group**: Added `juniper` to `docker` group (`sudo usermod -aG docker $USER`) to avoid needing `sudo` for every Docker command. Understood and accepted tradeoff: docker group membership is effectively root-equivalent on this host; acceptable since `juniper` already has full sudo access as sole admin.
+
+**Cleanup noted**: Leftover `hello-world` test container flagged for removal.
+
+**Docker project convention established**: `~/docker/<service-name>/` per service, with `docker-compose.yml` and bind-mounted data folders (e.g. `synapse-data/`, `postgres-data/`). Chosen over named volumes for visibility/backup simplicity, going forward.
+
+**Domain chosen**: `machinetheory.xyz`. Planned subdomain structure (e.g. `chat.machinetheory.xyz`, `git.machinetheory.xyz`) for future services and portfolio site.
+
+**Deploy Matrix Synapse + PostgreSQL**  
+>**Why Postgres over SQLite**: SQLite locks the full DB on writes (poor concurrency), weaker performance at any real scale, and migrating SQLite → Postgres later is an avoidable hassle. Decided to configure Postgres from the start.  
+**Directory setup**:  
+`mkdir -p ~/docker/synapse/synapse-data`  
+`mkdir -p ~/docker/synapse/postgres-data`  
+`cd ~/docker/synapse`  
+**Compose file** (`~/docker/synapse/docker-compose.yml`): defines `synapse` (matrixdotorg/synapse:latest) and `db` (postgres:15) services. Synapse depends on `db`, bind-mounts `./synapse-data:/data`, exposes `8008:8008`. Postgres bind-mounts `./postgres-data`, uses `POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C` — **mandatory** for Synapse compatibility.
+
+>**Generate initial homeserver config** (one-time, permanent server name):  
+`docker run -it --rm -v ./synapse-data:/data -e SYNAPSE_SERVER_NAME=chat.machinetheory.xyz -e SYNAPSE_REPORT_STATS=no matrixdotorg/synapse:latest generate`  
+**Result**: Generated `homeserver.yaml`, signing key, log config. Server name `chat.machinetheory.xyz` now permanently baked into signing key and config — cannot be changed without rebuilding the homeserver.
+
+>**Point Synapse at Postgres**: Default generated config uses SQLite. Edited `homeserver.yaml` database block to use `psycopg2` driver, pointing at `host: db` (resolves via Docker Compose's internal DNS by service name), with matching Postgres credentials.  
+**Permissions note**: `homeserver.yaml` ownership set to Synapse's internal container UID (991:991) on generation — required `sudo nano` to edit.
+
+>**Launch**:  
+`docker compose up -d`  
+**Verification**: `docker compose ps` confirmed both containers `Up`, Synapse reporting `(healthy)` after initial Postgres schema migrations completed. `docker compose logs synapse` showed normal background schema/index updates — no errors.
+
+**Create admin account**:  
+`docker exec -it synapse register_new_matrix_user http://localhost:8008 -c /data/homeserver.yaml`  
+Created `@juniper:chat.machinetheory.xyz` as admin via CLI tool (not public registration).
+
+**Verify functional client login**: Connected via Element desktop client. Logged in using full user ID with manually-specified homeserver URL (`http://10.10.10.3:8008`), since `chat.machinetheory.xyz` has no DNS record yet — login succeeded. Identity server warning noted as expected/benign (unrelated optional feature, not blocking).
+
+**Security checks performed**:  
+>**Public registration**: `grep -i "enable_registration" homeserver.yaml` returned no output → defaults to `false`. Confirmed registration is admin-only, not open to arbitrary signups.  
+**Internet exposure**: Confirmed via `sudo ufw status verbose` that port 8008 is not in the allow list — only 22/tcp (SSH) is allowed in. Synapse is LAN-only at the firewall level; no router port-forwarding or DNS configured, so not reachable from the internet.
+
+**Consider**: Reverse proxy, TLS/HTTPS, DNS setup, router port forwarding, and network topology decision (server has two interfaces — isolated LAN `10.10.10.x` via ethernet, home network/internet `192.168.x.x` via WiFi) all required before exposing Synapse externally — deliberately sequenced, not yet started.
+
 ## May 27, 2026 ##
 
 **Status**:  
