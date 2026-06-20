@@ -53,7 +53,7 @@ Tailscale chosen as intermediate step — gets chat server accessible outside LA
 
 **Docker project convention established**: `~/docker/<service-name>/` per service, with `docker-compose.yml` and bind-mounted data folders (e.g. `synapse-data/`, `postgres-data/`). Chosen over named volumes for visibility/backup simplicity, going forward.
 
-**Domain chosen**: `machinetheory.xyz`. Planned subdomain structure (e.g. `chat.machinetheory.xyz`, `git.machinetheory.xyz`) for future services and portfolio site.
+**Domain chosen**: `\*\*\*\*.xyz`. Planned subdomain structure (e.g. `chat.\*\*\*\*.xyz`, `git.\*\*\*\*.xyz`) for future services and portfolio site.
 
 **Deploy Matrix Synapse + PostgreSQL**  
 >**Why Postgres over SQLite**: SQLite locks the full DB on writes (poor concurrency), weaker performance at any real scale, and migrating SQLite → Postgres later is an avoidable hassle. Decided to configure Postgres from the start.  
@@ -65,7 +65,7 @@ Tailscale chosen as intermediate step — gets chat server accessible outside LA
 
 >**Generate initial homeserver config** (one-time, permanent server name):  
 `docker run -it --rm -v ./synapse-data:/data -e SYNAPSE_SERVER_NAME=chat.machinetheory.xyz -e SYNAPSE_REPORT_STATS=no matrixdotorg/synapse:latest generate`  
-**Result**: Generated `homeserver.yaml`, signing key, log config. Server name `chat.machinetheory.xyz` now permanently baked into signing key and config — cannot be changed without rebuilding the homeserver.
+**Result**: Generated `homeserver.yaml`, signing key, log config. Server name `chat.\*\*\*\*.xyz` now permanently baked into signing key and config — cannot be changed without rebuilding the homeserver.
 
 >**Point Synapse at Postgres**: Default generated config uses SQLite. Edited `homeserver.yaml` database block to use `psycopg2` driver, pointing at `host: db` (resolves via Docker Compose's internal DNS by service name), with matching Postgres credentials.  
 **Permissions note**: `homeserver.yaml` ownership set to Synapse's internal container UID (991:991) on generation — required `sudo nano` to edit.
@@ -78,7 +78,7 @@ Tailscale chosen as intermediate step — gets chat server accessible outside LA
 `docker exec -it synapse register_new_matrix_user http://localhost:8008 -c /data/homeserver.yaml`  
 Created `@juniper:chat.machinetheory.xyz` as admin via CLI tool (not public registration).
 
-**Verify functional client login**: Connected via Element desktop client. Logged in using full user ID with manually-specified homeserver URL (`http://10.10.10.3:8008`), since `chat.machinetheory.xyz` has no DNS record yet — login succeeded. Identity server warning noted as expected/benign (unrelated optional feature, not blocking).
+**Verify functional client login**: Connected via Element desktop client. Logged in using full user ID with manually-specified homeserver URL (`http://10.10.10.3:8008`), since `chat.\*\*\*\*.xyz` has no DNS record yet — login succeeded. Identity server warning noted as expected/benign (unrelated optional feature, not blocking).
 
 **Security checks performed**:  
 >**Public registration**: `grep -i "enable_registration" homeserver.yaml` returned no output → defaults to `false`. Confirmed registration is admin-only, not open to arbitrary signups.  
