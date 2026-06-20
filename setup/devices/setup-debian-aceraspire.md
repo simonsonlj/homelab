@@ -1,8 +1,31 @@
+## June 18, 2026 ##  
+
+**Status**:  
+>**Running**: UFW, Fail2Ban, Docker, Portainer, Matrix Synapse + PostgreSQL, Tailscale  
+**Planned**: Reverse proxy, TLS/HTTPS, DNS setup  
+**Consider**: Pi-hole, Cockpit, Home Assistant, Netdata, Immich, Paperless-ngx, Vaultwarden, Authelia, Homepage, Wazuh, CrowdSec, Lynis, and more
+
+**Confirmed/discovered (not new work, just verified)**:  
+>Acer has two network interfaces: enp3s0 (ethernet, 10.10.10.3, isolated LAN) and wlp4s0 (WiFi, 192.168.12.147, home network/internet)  
+T-Mobile Nokia 5G21 gateway confirmed as router  
+CGNAT confirmed: no public IPv4, curl ifconfig.me returned IPv6 only — conventional port forwarding ruled out for IPv4 internet exposure  
+
+**Decisions made**:  
+>Keep both interfaces — isolated LAN (10.10.10.x) preserved for future Kali/Metasploitable work  
+Domain chosen, not registered: \*\*\*\*.xyz  
+Planned subdomain structure: chat.\*\*\*\*.xyz, portfolio.\*\*\*\*.xyz, etc.  
+VPS tunnel (WireGuard + reverse proxy on a cheap VPS) identified as the correct long-term architecture for genuine public internet exposure  
+Tailscale chosen as intermediate step — gets chat server accessible outside LAN quickly, without VPS complexity, while accepting the limitation that other users need Tailscale installed  
+
+**Actually done**:  
+>Tailscale installed on Acer and MSI, both on the same tailnet  
+
 ## June 14, 2026 ##
 
 **Status**:  
-Running: UFW, Fail2Ban, Docker, Portainer, Matrix Synapse + PostgreSQL.  
-Consider: Reverse proxy, Pi-hole, Cockpit, Home Assistant, Netdata, Immich, Paperless-ngx, Vaultwarden, Tailscale, Authelia, Homepage, Wazuh, CrowdSec, Lynis, and more
+>**Running**: UFW, Fail2Ban, Docker, Portainer, Matrix Synapse + PostgreSQL.  
+**Planned**: Reverse proxy, TLS/HTTPS, DNS setup, router port forwarding, and network topology decision (server has two interfaces — isolated LAN `10.10.10.x` via ethernet, home network/internet `192.168.x.x` via WiFi) all required before exposing Synapse externally — deliberately sequenced, not yet started.  
+**Consider**: Pi-hole, Cockpit, Home Assistant, Netdata, Immich, Paperless-ngx, Vaultwarden, Tailscale, Authelia, Homepage, Wazuh, CrowdSec, Lynis, and more
 
 **Verify UFW and Fail2Ban** (installed previously, confirming actual active state)  
 >**UFW**: `sudo ufw status verbose`  
@@ -60,8 +83,6 @@ Created `@juniper:chat.machinetheory.xyz` as admin via CLI tool (not public regi
 **Security checks performed**:  
 >**Public registration**: `grep -i "enable_registration" homeserver.yaml` returned no output → defaults to `false`. Confirmed registration is admin-only, not open to arbitrary signups.  
 **Internet exposure**: Confirmed via `sudo ufw status verbose` that port 8008 is not in the allow list — only 22/tcp (SSH) is allowed in. Synapse is LAN-only at the firewall level; no router port-forwarding or DNS configured, so not reachable from the internet.
-
-**Consider**: Reverse proxy, TLS/HTTPS, DNS setup, router port forwarding, and network topology decision (server has two interfaces — isolated LAN `10.10.10.x` via ethernet, home network/internet `192.168.x.x` via WiFi) all required before exposing Synapse externally — deliberately sequenced, not yet started.
 
 ## May 27, 2026 ##
 
