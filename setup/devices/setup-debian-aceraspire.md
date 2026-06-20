@@ -76,7 +76,7 @@ Tailscale chosen as intermediate step — gets chat server accessible outside LA
 
 **Create admin account**:  
 `docker exec -it synapse register_new_matrix_user http://localhost:8008 -c /data/homeserver.yaml`  
-Created `@juniper:chat.machinetheory.xyz` as admin via CLI tool (not public registration).
+Created `@juniper:chat.****.xyz` as admin via CLI tool (not public registration).
 
 **Verify functional client login**: Connected via Element desktop client. Logged in using full user ID with manually-specified homeserver URL (`http://10.10.10.3:8008`), since `chat.****.xyz` has no DNS record yet — login succeeded. Identity server warning noted as expected/benign (unrelated optional feature, not blocking).
 
